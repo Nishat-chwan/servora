@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: servora-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ""       # root user, no password
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: appointment   # match your .env DB_DATABASE
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+    container_name: servora-backend
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql            # point to mysql service, not 127.0.0.1
+      DB_DATABASE: appointment
+      DB_USERNAME: root
+      DB_PASSWORD: ""
+    depends_on:
+      - mysql
+    volumes:
+      - ./backend:/var/www/html
+    extra_hosts:
+      "host.docker.internal": "127.0.0.1"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: servora-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
